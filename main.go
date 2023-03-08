@@ -21,15 +21,21 @@ func main() {
 	initTimeZone()
 	db := initDatabase()
 
-	CustomerRepositoryDB := repository.NewCustomerRepositoryDB(db)
-	// CustomerRepositoryMock := repository.NewCustomerRepositoryMock()
-	CustomerService := service.NewCustomerService(CustomerRepositoryDB)
-	customerHandler := handler.NewCustomerHandler(CustomerService)
+	customerRepositoryDB := repository.NewCustomerRepositoryDB(db)
+	customerService := service.NewCustomerService(customerRepositoryDB)
+	customerHandler := handler.NewCustomerHandler(customerService)
+
+	accountRepositoryDB := repository.NewAccountRepositoryDB(db)
+	accountService := service.NewAccountService(accountRepositoryDB)
+	accountHandler := handler.NewAccountHandler(accountService)
 
 	router := mux.NewRouter()
 
 	router.HandleFunc("/customers", customerHandler.GetCustomers).Methods(http.MethodGet)
 	router.HandleFunc("/customers/{customerID:[0-9]+}", customerHandler.GetCustomer).Methods(http.MethodGet)
+
+	router.HandleFunc("/customer/{customerID:[0-9]+}/accounts", accountHandler.GetAccounts).Methods(http.MethodGet)
+	router.HandleFunc("/customer/{customerID:[0-9]+}/accounts", accountHandler.NewAccount).Methods(http.MethodPost)
 
 	logs.Info("Listening on port " + fmt.Sprintf(":%v", viper.GetInt("app.port")))
 	http.ListenAndServe(fmt.Sprintf(":%v",
